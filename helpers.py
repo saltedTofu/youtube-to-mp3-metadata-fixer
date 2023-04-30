@@ -3,15 +3,13 @@ import os
 from os import path
 import openai
 import json
-from dotenv import load_dotenv
 import time
 
-load_dotenv()
 
-def callOpenAI(fileTitleWithExtension):
+def callOpenAI(fileTitleWithExtension, APIKey):
     fileTitle = fileTitleWithExtension.rstrip(".mp3")
 
-    openai.api_key = os.getenv('OPENAI_API_KEY')
+    openai.api_key = APIKey
     try:
         completion = openai.ChatCompletion.create(model="gpt-3.5-turbo", messages=[{"role": "user", "content": "give me the metadata including title and artist in the form of a JSON object for this song " + fileTitle}])
     except:
@@ -26,7 +24,7 @@ def callOpenAI(fileTitleWithExtension):
     time.sleep(21)
     return resMetaData
 
-def modifyFileData(resMetaData, fileTitleWithExtension):
+def modifyFileData(resMetaData, fileTitleWithExtension, directory):
     try:
         oldFile = path.join(directory, fileTitleWithExtension)
         f = music_tag.load_file(oldFile)
@@ -39,12 +37,13 @@ def modifyFileData(resMetaData, fileTitleWithExtension):
         print("ERROR: unable to modify file data from " + fileTitleWithExtension + " to " + resMetaData['title'])
 
 #Get array of files
-directory = "C:/Users/Sault/Music/NewlyAdded"
-dir_list = os.listdir(directory)
-for song in dir_list:
-    print("Converting " + song)
-    resMetaData = callOpenAI(song)
-    if resMetaData is not None:
-        modifyFileData(resMetaData,song)
-    
+def convertMetadata(directory, APIKey):
+    dir_list = os.listdir(directory)
+    for song in dir_list:
+        print("Converting " + song)
+        resMetaData = callOpenAI(song, APIKey)
+        if resMetaData is not None:
+            modifyFileData(resMetaData,song, directory)
 
+def main(directory, APIKey):
+    convertMetadata(directory, APIKey)
